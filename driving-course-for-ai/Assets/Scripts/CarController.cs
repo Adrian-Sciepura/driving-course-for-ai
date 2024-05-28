@@ -1,8 +1,9 @@
-using System.Collections;
-using System.Collections.Generic;
+using System;
+using Unity.MLAgents;
+using Unity.MLAgents.Actuators;
 using UnityEngine;
 
-public class CarController : MonoBehaviour
+public class CarController : Agent
 {
     private float horizontalInput, verticalInput;
     private float currentSteerAngle, currentbreakForce;
@@ -19,9 +20,120 @@ public class CarController : MonoBehaviour
     [SerializeField] private Transform frontLeftWheelTransform, frontRightWheelTransform;
     [SerializeField] private Transform rearLeftWheelTransform, rearRightWheelTransform;
 
+
+    // Defaults
+    [SerializeField] private GameObject defaultTransform;
+
+    public override void OnEpisodeBegin()
+    {
+        transform.position = defaultTransform.transform.position;
+        transform.rotation = defaultTransform.transform.rotation;
+    }
+
+
+    public override void Initialize()
+    {
+        Time.timeScale = 8f;
+    }
+
+
+    // Vector
+    // 0 - Break
+    // 1 - Horizontal
+    // 2 - Vertical
+    public override void OnActionReceived(ActionBuffers actions)
+    {
+        isBreaking = false;//Convert.ToBoolean(actions.ContinuousActions[0]);
+        horizontalInput = actions.ContinuousActions[1];
+        verticalInput = actions.ContinuousActions[2];
+    }
+
+    // Vector
+    // 0 - Break
+    // 1 - Horizontal
+    // 2 - Vertical
+    public override void Heuristic(in ActionBuffers actionsOut)
+    {
+        var continuousActions = actionsOut.ContinuousActions;
+        continuousActions[0] = Convert.ToSingle(Input.GetKey(KeyCode.Space));
+        continuousActions[1] = Input.GetAxis("Horizontal");
+        continuousActions[2] = Input.GetAxis("Vertical");
+    }
+
+
+
+    // Tags
+    // Area
+    // AvailableSpace
+    // UnavailableSpace
+    private void OnTriggerEnter(Collider other)
+    {        
+        switch(other.gameObject.tag)
+        {
+            case "AvailableSpace":
+            {
+                AddReward(2f);
+                break;
+            }
+            case "UnavailableSpace":
+            {
+
+                break;
+            }
+            case "Area":
+            {
+                AddReward(0.2f);
+                break;
+            }
+        }
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        switch (collision.gameObject.tag)
+        {
+            case "UnavailableSpace":
+            {
+                    Debug.Log("dupa");
+                AddReward(-2f);
+                EndEpisode();
+                break;
+            }
+        }
+
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        switch (other.gameObject.tag)
+        {
+            case "AvailableSpace":
+            {
+                AddReward(-1.5f);
+                break;
+            }
+            case "UnavailableSpace":
+            {
+                
+                break;
+            }
+            case "Area":
+            {
+                AddReward(-1f);
+                EndEpisode();
+                break;
+            }
+        }
+    }
+
+
+
+
+
+
+
     private void FixedUpdate()
     {
-        GetInput();
         HandleMotor();
         HandleSteering();
         UpdateWheels();
@@ -30,13 +142,7 @@ public class CarController : MonoBehaviour
     private void GetInput()
     {
         // Steering Input
-        horizontalInput = Input.GetAxis("Horizontal");
 
-        // Acceleration Input
-        verticalInput = Input.GetAxis("Vertical");
-
-        // Breaking Input
-        isBreaking = Input.GetKey(KeyCode.Space);
     }
 
     private void HandleMotor()
