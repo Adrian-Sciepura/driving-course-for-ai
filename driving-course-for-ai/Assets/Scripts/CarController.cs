@@ -9,6 +9,13 @@ public class CarController : Agent
     private float currentSteerAngle, currentbreakForce;
     private bool isBreaking;
 
+    private MapController mapController;
+    private int fieldCount = 0;
+    private float timeInFreeField = 0.0f;
+
+    private float MaxGenerationTime;
+    private float GenerationTime = 0.0f;
+
     // Settings
     [SerializeField] private float motorForce, breakForce, maxSteerAngle;
 
@@ -20,22 +27,26 @@ public class CarController : Agent
     [SerializeField] private Transform frontLeftWheelTransform, frontRightWheelTransform;
     [SerializeField] private Transform rearLeftWheelTransform, rearRightWheelTransform;
 
+    // SpawnArea
+    [SerializeField] private Transform PointA;
+    [SerializeField] private Transform PointB;
 
-    // Defaults
-    [SerializeField] private GameObject defaultTransform;
+    [SerializeField] private Collider CarCollider;
 
     public override void OnEpisodeBegin()
     {
-        transform.position = defaultTransform.transform.position;
-        transform.rotation = defaultTransform.transform.rotation;
+        CreateNewSetup();
     }
 
 
     public override void Initialize()
     {
-        Time.timeScale = 8f;
+        Time.timeScale = 3.0f;
+        MaxGenerationTime = 30.0f;
+        GenerationTime = 0.0f;
+        mapController = GetComponent<MapController>();
+        CreateNewSetup();
     }
-
 
     // Vector
     // 0 - Break
@@ -60,8 +71,6 @@ public class CarController : Agent
         continuousActions[2] = Input.GetAxis("Vertical");
     }
 
-
-
     // Tags
     // Area
     // AvailableSpace
@@ -72,17 +81,12 @@ public class CarController : Agent
         {
             case "AvailableSpace":
             {
-                AddReward(2f);
-                break;
-            }
-            case "UnavailableSpace":
-            {
-
+                AddReward(0.5f);
                 break;
             }
             case "Area":
             {
-                AddReward(0.2f);
+                fieldCount++;
                 break;
             }
         }
@@ -94,13 +98,41 @@ public class CarController : Agent
         {
             case "UnavailableSpace":
             {
-                    Debug.Log("dupa");
                 AddReward(-2f);
-                EndEpisode();
                 break;
             }
         }
 
+    }
+
+    private void OnTriggerStay(Collider other)
+    {
+        switch(other.gameObject.tag)
+        {
+            case "AvailableSpace":
+            {
+                timeInFreeField += Time.deltaTime;
+                if (timeInFreeField >= 2.0f)
+                {
+                    var carBounds = CarCollider.bounds;
+                    var otherBounds = other.bounds;
+                    int containedPoints = 0;
+
+                    for(int i = 0; i < 500; i++)
+                    {
+                        Vector3 randomPoint = GetRandomPointInBounds(carBounds);
+                        if (otherBounds.Contains(randomPoint))
+                            containedPoints++;
+                    }
+
+                    float result = containedPoints / 500.0f;
+
+                    AddReward(3.0f * result);
+                    EndEpisode();
+                }
+                break;
+            }
+        }
     }
 
     private void OnTriggerExit(Collider other)
@@ -109,41 +141,56 @@ public class CarController : Agent
         {
             case "AvailableSpace":
             {
-                AddReward(-1.5f);
-                break;
-            }
-            case "UnavailableSpace":
-            {
-                
+                AddReward(-0.6f);
+                timeInFreeField = 0.0f;
                 break;
             }
             case "Area":
             {
-                AddReward(-1f);
-                EndEpisode();
+                fieldCount--;
+                if (fieldCount == 0)
+                {
+                    AddReward(-2f);
+                    EndEpisode();
+                }
                 break;
             }
         }
     }
-
-
-
-
-
-
 
     private void FixedUpdate()
     {
         HandleMotor();
         HandleSteering();
         UpdateWheels();
+
+        GenerationTime += Time.deltaTime;
+        
+        if (GenerationTime >= MaxGenerationTime)
+        {
+            GenerationTime = 0.0f;
+            AddReward(-1f);
+            EndEpisode();
+        }
     }
 
-    private void GetInput()
+    Vector3 GetRandomPointInBounds(Bounds bounds)
     {
-        // Steering Input
-
+        return new Vector3(
+            UnityEngine.Random.Range(bounds.min.x, bounds.max.x),
+            UnityEngine.Random.Range(bounds.min.y, bounds.max.y),
+            UnityEngine.Random.Range(bounds.min.z, bounds.max.z)
+        );
     }
+
+    private void CreateNewSetup()
+    {
+        RandomizePosition();
+        RandomizeRotation();
+        mapController.Randomize();
+    }
+    private void RandomizePosition() => transform.position = new Vector3(UnityEngine.Random.Range(PointA.position.x, PointB.position.x), transform.position.y, UnityEngine.Random.Range(PointA.position.z, PointB.position.z));
+    private void RandomizeRotation() => transform.rotation = Quaternion.Euler(0.0f, UnityEngine.Random.Range(-50.0f, 50.0f), 0.0f);
 
     private void HandleMotor()
     {
