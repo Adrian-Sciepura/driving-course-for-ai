@@ -5,6 +5,7 @@ public class MapController : MonoBehaviour
     [SerializeField] private Transform[] ParkFields;
     [SerializeField] private int MaxFreeFields = 6;
 
+    [SerializeField] private Transform SpawnRoot;
     [SerializeField] private GameObject ParkedCarPrefab;
     [SerializeField] private GameObject FreeSpacePrefab;
 
@@ -35,6 +36,7 @@ public class MapController : MonoBehaviour
             if (spawnedObjects[pos] == null)
             {
                 spawnedObjects[pos] = Instantiate(FreeSpacePrefab, ParkFields[pos].position, ParkFields[pos].rotation);
+                spawnedObjects[pos].transform.parent = SpawnRoot;
                 freeFields--;
             }
         }
@@ -47,7 +49,8 @@ public class MapController : MonoBehaviour
                 
                 Vector3 pos = spawnedObjects[i].transform.position;
                 pos.y = 0.01f;
-                
+
+                spawnedObjects[i].transform.parent = SpawnRoot;
                 spawnedObjects[i].transform.position = pos;
                 spawnedObjects[i].transform.rotation = Quaternion.Euler(0.0f, 90.0f + FreeSpacePrefab.transform.rotation.y, 0.0f);
             }

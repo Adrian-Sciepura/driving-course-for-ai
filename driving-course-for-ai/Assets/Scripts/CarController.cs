@@ -9,7 +9,9 @@ public class CarController : Agent
     private float currentSteerAngle, currentbreakForce;
     private bool isBreaking;
 
+    private Rigidbody rigidbody;
     private MapController mapController;
+    
     private int fieldCount = 0;
     private float timeInFreeField = 0.0f;
 
@@ -41,11 +43,10 @@ public class CarController : Agent
 
     public override void Initialize()
     {
-        Time.timeScale = 3.0f;
         MaxGenerationTime = 30.0f;
         GenerationTime = 0.0f;
         mapController = GetComponent<MapController>();
-        CreateNewSetup();
+        rigidbody = GetComponent<Rigidbody>();
     }
 
     // Vector
@@ -187,10 +188,28 @@ public class CarController : Agent
     {
         RandomizePosition();
         RandomizeRotation();
+        StopWheelsMovement();
+        rigidbody.velocity = Vector3.zero;
         mapController.Randomize();
     }
     private void RandomizePosition() => transform.position = new Vector3(UnityEngine.Random.Range(PointA.position.x, PointB.position.x), transform.position.y, UnityEngine.Random.Range(PointA.position.z, PointB.position.z));
     private void RandomizeRotation() => transform.rotation = Quaternion.Euler(0.0f, UnityEngine.Random.Range(-50.0f, 50.0f), 0.0f);
+
+    private void StopWheelsMovement()
+    {
+        frontLeftWheelCollider.motorTorque = 0f;
+        frontRightWheelCollider.motorTorque = 0f;
+
+        frontRightWheelCollider.brakeTorque = 0f;
+        frontLeftWheelCollider.brakeTorque = 0f;
+        rearLeftWheelCollider.brakeTorque = 0f;
+        rearRightWheelCollider.brakeTorque = 0f;
+
+        currentSteerAngle = 0f;
+        frontLeftWheelCollider.steerAngle = 0f;
+        frontRightWheelCollider.steerAngle = 0f;
+        UpdateWheels();
+    }
 
     private void HandleMotor()
     {
