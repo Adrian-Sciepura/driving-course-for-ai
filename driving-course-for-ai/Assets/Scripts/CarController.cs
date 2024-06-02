@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Unity.MLAgents;
 using Unity.MLAgents.Actuators;
 using Unity.MLAgents.Sensors;
@@ -16,6 +17,7 @@ public class CarController : Agent
     private float timeInFreeField = 0.0f;
     private float MaxGenerationTime;
     private float GenerationTime = 0.0f;
+    private int HowManyFreeSpacesAreOccupied = 0;
 
     public Transform rayOrigin;
     public float rayLength = 15.0f;
@@ -43,7 +45,7 @@ public class CarController : Agent
     public override void OnEpisodeBegin()
     {
         CreateNewSetup();
-        FindNearestParkingSpace();
+        //FindNearestParkingSpace();
     }
 
     public override void Initialize()
@@ -52,44 +54,6 @@ public class CarController : Agent
         GenerationTime = 0.0f;
         mapController = GetComponent<MapController>();
         rigidbody = GetComponent<Rigidbody>();
-    }
-
-    public override void CollectObservations(VectorSensor sensor)
-    {
-        RaycastHit hit;
-
-        if (Physics.Raycast(rayOrigin.position, rayOrigin.forward, out hit, rayLength))
-        {
-            Debug.DrawRay(rayOrigin.position, rayOrigin.forward * rayLength, Color.red);
-
-            if (hit.collider != null)
-            {
-                if (hit.collider.CompareTag("OccupiedParkingSpace"))
-                {
-                    sensor.AddObservation(1.0f);
-                }
-                else if (hit.collider.CompareTag("Fence"))
-                {
-                    sensor.AddObservation(2.0f);
-                }
-                else if (hit.collider.CompareTag("AvailableParkingSpace"))
-                {
-                    //sensor.AddObservation(-1.0f);
-                }
-                else
-                {
-                    //sensor.AddObservation(0.0f);
-                }
-            }
-            else
-            {
-                //sensor.AddObservation(0.0f);
-            }
-        }
-        else
-        {
-            //sensor.AddObservation(0.0f);
-        }
     }
 
     // Vector
@@ -117,7 +81,10 @@ public class CarController : Agent
         switch (other.gameObject.tag)
         {
             case "AvailableParkingSpace":
-                AddReward(4.0f);
+                HowManyFreeSpacesAreOccupied++;
+
+                if(HowManyFreeSpacesAreOccupied == 1)
+                    AddReward(4.0f);
                 break;
             case "ParkingArea":
                 AddReward(2.0f);
@@ -146,7 +113,7 @@ public class CarController : Agent
 
     private void OnTriggerStay(Collider other)
     {
-        if (other.gameObject.tag == "AvailableSpace")
+        if (other.gameObject.tag == "AvailableParkingSpace" && HowManyFreeSpacesAreOccupied == 1)
         {
             timeInFreeField += Time.deltaTime;
             if (timeInFreeField >= 1.0f)
@@ -175,15 +142,19 @@ public class CarController : Agent
         switch (other.gameObject.tag)
         {
             case "AvailableParkingSpace":
-                AddReward(-2.0f);
+                HowManyFreeSpacesAreOccupied--;
+
+                if (HowManyFreeSpacesAreOccupied == 0)
+                    AddReward(-4.0f);
+
                 timeInFreeField = 0.0f;
                 break;
             case "ParkingArea":
                 AddReward(-2.0f);
+                EndEpisode();
                 break;
             case "NearParkingSpaceArea":
                 AddReward(-0.3f);
-                EndEpisode();
                 break;
         }
     }
@@ -209,7 +180,7 @@ public class CarController : Agent
     private void FindNearestParkingSpace()
     {
         // Find all available parking spaces
-        GameObject[] availableParkingSpaces = GameObject.FindGameObjectsWithTag("AvailableParkingSpace");
+        List<GameObject> availableParkingSpaces = mapController.FreeParkingFields;
 
         // Find the nearest parking space
         float closestDistance = float.MaxValue;
@@ -236,17 +207,17 @@ public class CarController : Agent
     private void CreateNewSetup()
     {
         RandomizePosition();
-        //RandomizeRotation();
+        RandomizeRotation();
         StopWheelsMovement();
         rigidbody.velocity = Vector3.zero;
         mapController.Randomize();
 
-        FindNearestParkingSpace();
-        lastDistanceToParkingSpace = Vector3.Distance(transform.position, nearestParkingSpace.position);
+        //FindNearestParkingSpace();
+        //lastDistanceToParkingSpace = Vector3.Distance(transform.position, nearestParkingSpace.position);
     }
 
     private void RandomizePosition() => transform.position = new Vector3(UnityEngine.Random.Range(PointA.position.x, PointB.position.x), transform.position.y, UnityEngine.Random.Range(PointA.position.z, PointB.position.z));
-    private void RandomizeRotation() => transform.rotation = Quaternion.Euler(0.0f, UnityEngine.Random.Range(-50.0f, 50.0f), 0.0f);
+    private void RandomizeRotation() => transform.rotation = Quaternion.Euler(0.0f, UnityEngine.Random.Range(-60.0f, 60.0f), 0.0f);
 
     private void StopWheelsMovement()
     {

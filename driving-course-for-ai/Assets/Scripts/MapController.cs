@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class MapController : MonoBehaviour
@@ -10,6 +12,14 @@ public class MapController : MonoBehaviour
     [SerializeField] private GameObject FreeSpacePrefab;
 
     private GameObject[] spawnedObjects;
+
+    public List<GameObject> FreeParkingFields
+    {
+        get
+        {
+            return spawnedObjects.Where(x => x.CompareTag("AvailableParkingSpace")).ToList();
+        }
+    }
 
     private void Awake()
     {
