@@ -50,7 +50,7 @@ public class CarController : Agent
 
     public override void Initialize()
     {
-        MaxGenerationTime = 90.0f;
+        MaxGenerationTime = 60.0f;
         GenerationTime = 0.0f;
         mapController = GetComponent<MapController>();
         rigidbody = GetComponent<Rigidbody>();
@@ -58,7 +58,7 @@ public class CarController : Agent
 
     // Vector
     // 0 - Horizontal
-    // 1 - Vertical
+    // 1 - VerticalF
     public override void OnActionReceived(ActionBuffers actions)
     {
         isBreaking = false;
@@ -97,13 +97,12 @@ public class CarController : Agent
         switch (collision.gameObject.tag)
         {
             case "Fence":
-            case "UnavailableSpace":
-                AddReward(-1.5f);
+                AddReward(-2.5f);
                 EndEpisode();
                 break;
             case "OccupiedParkingSpace":
-                AddReward(-1.0f);
-                EndEpisode();
+                AddReward(-2.0f);
+                //EndEpisode();
                 break;
             case "NearParkingSpaceArea":
                 AddReward(0.3f);
@@ -113,10 +112,14 @@ public class CarController : Agent
 
     private void OnTriggerStay(Collider other)
     {
+<<<<<<< Updated upstream
         if (other.gameObject.tag == "AvailableParkingSpace" && HowManyFreeSpacesAreOccupied == 1)
+=======
+        if (other.gameObject.tag == "AvailableParkingSpace")
+>>>>>>> Stashed changes
         {
             timeInFreeField += Time.deltaTime;
-            if (timeInFreeField >= 1.0f)
+            if (timeInFreeField >= 2.0f)
             {
                 var carBounds = CarCollider.bounds;
                 var otherBounds = other.bounds;
@@ -131,7 +134,7 @@ public class CarController : Agent
 
                 float result = containedPoints / 500.0f;
 
-                AddReward(2.0f + 3.0f * result);
+                AddReward(2.0f + 6.0f * result);
                 EndEpisode();
             }
         }
