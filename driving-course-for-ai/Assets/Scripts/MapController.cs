@@ -3,7 +3,7 @@ using UnityEngine;
 public class MapController : MonoBehaviour
 {
     [SerializeField] private Transform[] ParkFields;
-    [SerializeField] private int MaxFreeFields = 6;
+    [SerializeField] private int MaxFreeFields = 9;
 
     [SerializeField] private Transform SpawnRoot;
     [SerializeField] private GameObject ParkedCarPrefab;
@@ -28,7 +28,7 @@ public class MapController : MonoBehaviour
         }
 
         
-        int freeFields = Random.Range(1, MaxFreeFields);
+        int freeFields = Random.Range(3, MaxFreeFields);
 
         while (freeFields > 0)
         {
