@@ -7,6 +7,12 @@ TagManager:
   - Area
   - AvailableSpace
   - UnavailableSpace
+  - ParkingArea
+  - RoadArea
+  - AvailableParkingSpace
+  - OccupiedParkingSpace
+  - NearParkingSpaceArea
+  - Fence
   layers:
   - Default
   - TransparentFX

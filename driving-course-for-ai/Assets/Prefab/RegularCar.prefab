@@ -829,7 +829,7 @@ GameObject:
   - component: {fileID: 6064359956430501869}
   m_Layer: 0
   m_Name: RegularCar
-  m_TagString: UnavailableSpace
+  m_TagString: OccupiedParkingSpace
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
