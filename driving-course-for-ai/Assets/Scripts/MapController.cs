@@ -66,4 +66,20 @@ public class MapController : MonoBehaviour
             }
         }
     }
+    
+    public void ResetCarsPosition()
+    {
+        for(int i = 0; i < spawnedObjects.Length; i++)
+        {
+            if (spawnedObjects[i].CompareTag("OccupiedParkingSpace"))
+            {
+                Vector3 pos = ParkFields[i].transform.position;
+                pos.y = 0.01f;
+
+                spawnedObjects[i].transform.position = pos;
+                spawnedObjects[i].transform.rotation = Quaternion.Euler(0.0f, 90.0f + FreeSpacePrefab.transform.rotation.y, 0.0f);
+                spawnedObjects[i].GetComponent<Rigidbody>().velocity = Vector3.zero;
+            }
+        }
+    }
 }

@@ -828,6 +828,9 @@ GameObject:
   - component: {fileID: 152847596761649955}
   - component: {fileID: 2190883350569120557}
   - component: {fileID: 6064359956430501869}
+  - component: {fileID: 7307464563757181376}
+  - component: {fileID: 3070447326983952164}
+  - component: {fileID: 3548490781665149845}
   m_Layer: 0
   m_Name: Sedan
   m_TagString: Untagged
@@ -848,6 +851,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 2735041041664955542}
   - {fileID: 8441796071056216666}
   - {fileID: 643102519462532518}
   - {fileID: 3095894020048472255}
@@ -943,9 +947,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1b9d7da2ef103dc4fb1d926369d3e992, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  motorForce: 1000
-  breakForce: 3000
-  maxSteerAngle: 30
+  agentParameters:
+    maxStep: 0
+  hasUpgradedFromAgentParameters: 1
+  MaxStep: 0
+  rayOrigin: {fileID: 0}
+  rayLength: 15
+  motorForce: 2000
+  breakForce: 4500
+  maxSteerAngle: 50
   frontLeftWheelCollider: {fileID: 2313411310220175426}
   frontRightWheelCollider: {fileID: 3873189040383873683}
   rearLeftWheelCollider: {fileID: 8219216231074489162}
@@ -954,6 +964,9 @@ MonoBehaviour:
   frontRightWheelTransform: {fileID: 5537116092433981621}
   rearLeftWheelTransform: {fileID: 4990852180504601691}
   rearRightWheelTransform: {fileID: 3856397369002912290}
+  PointA: {fileID: 0}
+  PointB: {fileID: 0}
+  CarCollider: {fileID: 6064359956430501869}
 --- !u!65 &6064359956430501869
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -975,6 +988,140 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1.7508645, y: 1.1378039, z: 5.119555}
   m_Center: {x: 0.003939867, y: 0.9503816, z: 0.09264207}
+--- !u!114 &7307464563757181376
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8571151431616509086}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5d1c4e0b1822b495aa52bc52839ecb30, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_BrainParameters:
+    VectorObservationSize: 0
+    NumStackedVectorObservations: 1
+    m_ActionSpec:
+      m_NumContinuousActions: 3
+      BranchSizes: 
+    VectorActionSize: 03000000
+    VectorActionDescriptions: []
+    VectorActionSpaceType: 1
+    hasUpgradedBrainParametersWithActionSpec: 1
+  m_Model: {fileID: 0}
+  m_InferenceDevice: 0
+  m_BehaviorType: 0
+  m_BehaviorName: Driver
+  TeamId: 0
+  m_UseChildSensors: 1
+  m_UseChildActuators: 1
+  m_ObservableAttributeHandling: 0
+--- !u!114 &3070447326983952164
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8571151431616509086}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3a5c9d521e5ef4759a8246a07d52221e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  DecisionPeriod: 5
+  TakeActionsBetweenDecisions: 1
+--- !u!114 &3548490781665149845
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8571151431616509086}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 223693181351f374f8f0f3764f451eaa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ParkFields:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  MaxFreeFields: 4
+  SpawnRoot: {fileID: 0}
+  ParkedCarPrefab: {fileID: 8571151431616509086, guid: 5b1d38d64a314234f83bf1843ad49e56, type: 3}
+  FreeSpacePrefab: {fileID: 563026987323338475, guid: 5e7566156197a3b43b936e1b9a2d841a, type: 3}
+--- !u!1 &8678268024242936535
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2735041041664955542}
+  - component: {fileID: 2690803609285617407}
+  m_Layer: 0
+  m_Name: Ray
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2735041041664955542
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8678268024242936535}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0.67, z: 0.844}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4058314581033238577}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2690803609285617407
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8678268024242936535}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6bb6b867a41448888c1cd4f99643ad71, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_SensorName: RayPerceptionSensor
+  m_DetectableTags:
+  - AvailableParkingSpace
+  - OccupiedParkingSpace
+  - Fence
+  m_RaysPerDirection: 6
+  m_MaxRayDegrees: 180
+  m_SphereCastRadius: 0.5
+  m_RayLength: 15
+  m_RayLayerMask:
+    serializedVersion: 2
+    m_Bits: 4294967241
+  m_ObservationStacks: 1
+  rayHitColor: {r: 1, g: 0, b: 0, a: 1}
+  rayMissColor: {r: 1, g: 1, b: 1, a: 1}
+  m_StartVerticalOffset: 0
+  m_EndVerticalOffset: 0
 --- !u!1 &8710814688881613367
 GameObject:
   m_ObjectHideFlags: 0

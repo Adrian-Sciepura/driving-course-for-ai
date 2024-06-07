@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Unity.MLAgents;
 using Unity.MLAgents.Actuators;
-using Unity.MLAgents.Sensors;
+using UnityEditor;
 using UnityEngine;
 
 public class CarController : Agent
@@ -42,6 +42,8 @@ public class CarController : Agent
 
     [SerializeField] private Collider CarCollider;
 
+    private bool IsAlreadyGenerated = false;
+
     public override void OnEpisodeBegin()
     {
         CreateNewSetup();
@@ -50,7 +52,7 @@ public class CarController : Agent
 
     public override void Initialize()
     {
-        MaxGenerationTime = 60.0f;
+        MaxGenerationTime = 120.0f;
         GenerationTime = 0.0f;
         mapController = GetComponent<MapController>();
         rigidbody = GetComponent<Rigidbody>();
@@ -61,9 +63,9 @@ public class CarController : Agent
     // 1 - VerticalF
     public override void OnActionReceived(ActionBuffers actions)
     {
-        isBreaking = false;
         horizontalInput = actions.ContinuousActions[0];
         verticalInput = actions.ContinuousActions[1];
+        isBreaking = actions.ContinuousActions[2] == 1.0f;
     }
 
     // Vector
@@ -74,6 +76,7 @@ public class CarController : Agent
         var continuousActions = actionsOut.ContinuousActions;
         continuousActions[0] = Input.GetAxis("Horizontal");
         continuousActions[1] = Input.GetAxis("Vertical");
+        continuousActions[2] = Input.GetKey(KeyCode.Space) ? 1.0f : 0.0f;
     }
 
     private void OnTriggerEnter(Collider other)
@@ -84,25 +87,12 @@ public class CarController : Agent
                 HowManyFreeSpacesAreOccupied++;
 
                 if(HowManyFreeSpacesAreOccupied == 1)
+                {
                     AddReward(4.0f);
+                }
                 break;
             case "ParkingArea":
                 AddReward(2.0f);
-                break;
-        }
-    }
-
-    private void OnCollisionEnter(Collision collision)
-    {
-        switch (collision.gameObject.tag)
-        {
-            case "Fence":
-                AddReward(-2.5f);
-                EndEpisode();
-                break;
-            case "OccupiedParkingSpace":
-                AddReward(-2.0f);
-                //EndEpisode();
                 break;
             case "NearParkingSpaceArea":
                 AddReward(0.3f);
@@ -110,16 +100,29 @@ public class CarController : Agent
         }
     }
 
+    private void OnCollisionEnter(Collision collision)
+    {
+        float speed = rigidbody.velocity.magnitude / 10.0f;
+        switch (collision.gameObject.tag)
+        {
+            case "Fence":
+                AddReward(-2.5f - 2.0f * speed);
+                EndEpisode();
+                break;
+            case "OccupiedParkingSpace":
+                AddReward(-1.5f - 1.2f * speed);
+                EndEpisode();
+                break;
+        }
+    }
+
     private void OnTriggerStay(Collider other)
     {
-<<<<<<< Updated upstream
-        if (other.gameObject.tag == "AvailableParkingSpace" && HowManyFreeSpacesAreOccupied == 1)
-=======
         if (other.gameObject.tag == "AvailableParkingSpace")
->>>>>>> Stashed changes
         {
             timeInFreeField += Time.deltaTime;
-            if (timeInFreeField >= 2.0f)
+            float speed = rigidbody.velocity.magnitude / 10.0f;
+            if (timeInFreeField >= 2.0f && speed < 0.1)
             {
                 var carBounds = CarCollider.bounds;
                 var otherBounds = other.bounds;
@@ -133,27 +136,35 @@ public class CarController : Agent
                 }
 
                 float result = containedPoints / 500.0f;
-
-                AddReward(2.0f + 6.0f * result);
+                
+                AddReward((2.0f + 6.0f * result - 3.0f * speed) / (HowManyFreeSpacesAreOccupied * HowManyFreeSpacesAreOccupied));
                 EndEpisode();
+            }
+            else
+            {
+                AddReward(0.005f / (HowManyFreeSpacesAreOccupied * HowManyFreeSpacesAreOccupied));
             }
         }
     }
 
     private void OnTriggerExit(Collider other)
     {
+        float speed = rigidbody.velocity.magnitude / 10.0f;
+
         switch (other.gameObject.tag)
         {
             case "AvailableParkingSpace":
                 HowManyFreeSpacesAreOccupied--;
 
                 if (HowManyFreeSpacesAreOccupied == 0)
+                {
+                    timeInFreeField = 0.0f;
                     AddReward(-4.0f);
-
-                timeInFreeField = 0.0f;
+                }
+                
                 break;
             case "ParkingArea":
-                AddReward(-2.0f);
+                AddReward(-2.0f - 1.5f * speed);
                 EndEpisode();
                 break;
             case "NearParkingSpaceArea":
@@ -214,6 +225,7 @@ public class CarController : Agent
         StopWheelsMovement();
         rigidbody.velocity = Vector3.zero;
         mapController.Randomize();
+
 
         //FindNearestParkingSpace();
         //lastDistanceToParkingSpace = Vector3.Distance(transform.position, nearestParkingSpace.position);

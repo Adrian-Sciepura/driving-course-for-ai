@@ -5,4 +5,5 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes: []
-  m_configObjects: {}
+  m_configObjects:
+    com.unity.ml-agents.settings: {fileID: 11400000, guid: 36d3cc8edf11590478bfea6855bc5283, type: 2}
