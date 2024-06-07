@@ -1,8 +1,5 @@
-using System;
-using System.Collections.Generic;
 using Unity.MLAgents;
 using Unity.MLAgents.Actuators;
-using UnityEditor;
 using UnityEngine;
 
 public class CarController : Agent
@@ -11,16 +8,15 @@ public class CarController : Agent
     private float currentSteerAngle, currentbreakForce;
     private bool isBreaking;
 
-    private Rigidbody rigidbody;
+    private new Rigidbody rigidbody;
     private MapController mapController;
 
     private float timeInFreeField = 0.0f;
-    private float MaxGenerationTime;
     private float GenerationTime = 0.0f;
     private int HowManyFreeSpacesAreOccupied = 0;
+    private bool IsAlreadyGenerated = false;
 
-    public Transform rayOrigin;
-    public float rayLength = 15.0f;
+    private DriverLearningData driverData;
 
     // Settings
     [SerializeField] private float motorForce, breakForce, maxSteerAngle;
@@ -42,12 +38,10 @@ public class CarController : Agent
     public override void OnEpisodeBegin()
     {
         CreateNewSetup();
-        //FindNearestParkingSpace();
     }
 
     public override void Initialize()
     {
-        MaxGenerationTime = 120.0f;
         GenerationTime = 0.0f;
         mapController = GetComponent<MapController>();
         rigidbody = GetComponent<Rigidbody>();
@@ -82,15 +76,13 @@ public class CarController : Agent
                 HowManyFreeSpacesAreOccupied++;
 
                 if(HowManyFreeSpacesAreOccupied == 1)
-                {
-                    AddReward(4.0f);
-                }
+                    AddReward(driverData.availableParkingSpaceData.OnEnterReward);
                 break;
             case "ParkingArea":
-                AddReward(2.0f);
+                AddReward(driverData.areaData.ParkingArea_OnEnterReward);
                 break;
             case "NearParkingSpaceArea":
-                AddReward(0.3f);
+                AddReward(driverData.areaData.NearParkingSpaceArea_OnEnterReward);
                 break;
         }
     }
@@ -101,11 +93,11 @@ public class CarController : Agent
         switch (collision.gameObject.tag)
         {
             case "Fence":
-                AddReward(-2.5f - 2.0f * speed);
+                AddReward(driverData.fenceData.OnCollision_BaseReward + driverData.fenceData.OnCollision_SpeedMultiplier * speed);
                 EndEpisode();
                 break;
             case "OccupiedParkingSpace":
-                AddReward(-1.5f - 1.2f * speed);
+                AddReward(driverData.occupiedParkingSpaceData.OnCollisionReward + driverData.occupiedParkingSpaceData.OnCollision_SpeedMultiplier * speed);
                 EndEpisode();
                 break;
         }
@@ -117,7 +109,7 @@ public class CarController : Agent
         {
             timeInFreeField += Time.deltaTime;
             float speed = rigidbody.velocity.magnitude / 10.0f;
-            if (timeInFreeField >= 2.0f && speed < 0.1)
+            if (timeInFreeField >= driverData.availableParkingSpaceData.OnStay_MinimumTimeToStop && speed < driverData.availableParkingSpaceData.OnStay_MaximumSpeedtoStop)
             {
                 var carBounds = CarCollider.bounds;
                 var otherBounds = other.bounds;
@@ -132,12 +124,15 @@ public class CarController : Agent
 
                 float result = containedPoints / 500.0f;
                 
-                AddReward((2.0f + 6.0f * result - 3.0f * speed) / (HowManyFreeSpacesAreOccupied * HowManyFreeSpacesAreOccupied));
+                AddReward((
+                    driverData.availableParkingSpaceData.OnStay_StopBaseReward +
+                    driverData.availableParkingSpaceData.OnStay_StopCoverageMultiplier * result +
+                    driverData.availableParkingSpaceData.OnStay_StopSpeedMultiplier * speed) / (HowManyFreeSpacesAreOccupied * HowManyFreeSpacesAreOccupied));
                 EndEpisode();
             }
             else
             {
-                AddReward(0.005f / (HowManyFreeSpacesAreOccupied * HowManyFreeSpacesAreOccupied));
+                AddReward(driverData.availableParkingSpaceData.OnStay_MovingReward / (HowManyFreeSpacesAreOccupied * HowManyFreeSpacesAreOccupied));
             }
         }
     }
@@ -154,16 +149,16 @@ public class CarController : Agent
                 if (HowManyFreeSpacesAreOccupied == 0)
                 {
                     timeInFreeField = 0.0f;
-                    AddReward(-4.0f);
+                    AddReward(driverData.availableParkingSpaceData.OnExitReward);
                 }
                 
                 break;
             case "ParkingArea":
-                AddReward(-2.0f - 1.5f * speed);
+                AddReward(driverData.areaData.ParkingArea_OnExit_BaseReward + driverData.areaData.ParkingArea_OnExit_SpeedMultiplier * speed);
                 EndEpisode();
                 break;
             case "NearParkingSpaceArea":
-                AddReward(-0.3f);
+                AddReward(driverData.areaData.NearParkingSpaceArea_OnExitReward);
                 break;
         }
     }
@@ -176,12 +171,12 @@ public class CarController : Agent
 
         GenerationTime += Time.deltaTime;
 
-        AddReward(-0.005f);
+        AddReward(driverData.basicData.RewardPerDeltaTime);
 
-        if (GenerationTime >= MaxGenerationTime)
+        if (GenerationTime >= driverData.basicData.MaxGenerationTime)
         {
             GenerationTime = 0.0f;
-            AddReward(-3.0f);
+            AddReward(driverData.basicData.ExceededMaxGenerationTimeReward);
             EndEpisode();
         }
     }
@@ -197,15 +192,25 @@ public class CarController : Agent
 
     private void CreateNewSetup()
     {
+        driverData = GameManager.instance.driverLearningData;
         RandomizePosition();
         RandomizeRotation();
         StopWheelsMovement();
         rigidbody.velocity = Vector3.zero;
-        mapController.Randomize();
+
+        if(driverData.mapRandomizationData.RandomizeEveryEpisode)
+        {
+            mapController.Randomize();
+        }
+        else if(!IsAlreadyGenerated)
+        {
+            mapController.Randomize();
+            IsAlreadyGenerated = true;
+        }
     }
 
     private void RandomizePosition() => transform.position = new Vector3(UnityEngine.Random.Range(PointA.position.x, PointB.position.x), transform.position.y, UnityEngine.Random.Range(PointA.position.z, PointB.position.z));
-    private void RandomizeRotation() => transform.rotation = Quaternion.Euler(0.0f, UnityEngine.Random.Range(-60.0f, 60.0f), 0.0f);
+    private void RandomizeRotation() => transform.rotation = Quaternion.Euler(0.0f, driverData.carRandomizationData.RandomizeRotation ? UnityEngine.Random.Range(driverData.carRandomizationData.MinAngle, driverData.carRandomizationData.MaxAngle) : 0.0f, 0.0f);
 
     private void StopWheelsMovement()
     {

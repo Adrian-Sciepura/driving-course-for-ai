@@ -5,13 +5,14 @@ using UnityEngine;
 public class MapController : MonoBehaviour
 {
     [SerializeField] private Transform[] ParkFields;
-    [SerializeField] private int MaxFreeFields = 9;
+    [SerializeField] private int MaxFreeFields = 12;
 
     [SerializeField] private Transform SpawnRoot;
     [SerializeField] private GameObject ParkedCarPrefab;
     [SerializeField] private GameObject FreeSpacePrefab;
 
     private GameObject[] spawnedObjects;
+    private DriverLearningData.MapRandomizationData mapRandomizationData;
 
     public List<GameObject> FreeParkingFields
     {
@@ -28,6 +29,7 @@ public class MapController : MonoBehaviour
 
     public void Randomize()
     {
+        mapRandomizationData = GameManager.instance.driverLearningData.mapRandomizationData;
         int allFields = ParkFields.Length;
         
         for (int i = 0; i < allFields; i++)
@@ -38,7 +40,7 @@ public class MapController : MonoBehaviour
         }
 
         
-        int freeFields = Random.Range(3, MaxFreeFields);
+        int freeFields = Random.Range(mapRandomizationData.MinFreeSpaces, MaxFreeFields);
 
         while (freeFields > 0)
         {
