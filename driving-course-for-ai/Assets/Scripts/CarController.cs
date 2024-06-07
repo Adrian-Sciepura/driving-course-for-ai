@@ -22,9 +22,6 @@ public class CarController : Agent
     public Transform rayOrigin;
     public float rayLength = 15.0f;
 
-    private Transform nearestParkingSpace;
-    private float lastDistanceToParkingSpace = float.MaxValue;
-
     // Settings
     [SerializeField] private float motorForce, breakForce, maxSteerAngle;
 
@@ -41,8 +38,6 @@ public class CarController : Agent
     [SerializeField] private Transform PointB;
 
     [SerializeField] private Collider CarCollider;
-
-    private bool IsAlreadyGenerated = false;
 
     public override void OnEpisodeBegin()
     {
@@ -191,24 +186,6 @@ public class CarController : Agent
         }
     }
 
-    private void FindNearestParkingSpace()
-    {
-        // Find all available parking spaces
-        List<GameObject> availableParkingSpaces = mapController.FreeParkingFields;
-
-        // Find the nearest parking space
-        float closestDistance = float.MaxValue;
-        foreach (GameObject parkingSpace in availableParkingSpaces)
-        {
-            float distance = Vector3.Distance(transform.position, parkingSpace.transform.position);
-            if (distance < closestDistance)
-            {
-                closestDistance = distance;
-                nearestParkingSpace = parkingSpace.transform;
-            }
-        }
-    }
-
     Vector3 GetRandomPointInBounds(Bounds bounds)
     {
         return new Vector3(
@@ -225,10 +202,6 @@ public class CarController : Agent
         StopWheelsMovement();
         rigidbody.velocity = Vector3.zero;
         mapController.Randomize();
-
-
-        //FindNearestParkingSpace();
-        //lastDistanceToParkingSpace = Vector3.Distance(transform.position, nearestParkingSpace.position);
     }
 
     private void RandomizePosition() => transform.position = new Vector3(UnityEngine.Random.Range(PointA.position.x, PointB.position.x), transform.position.y, UnityEngine.Random.Range(PointA.position.z, PointB.position.z));
