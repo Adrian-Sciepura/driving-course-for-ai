@@ -1,5 +1,6 @@
 using Unity.MLAgents;
 using Unity.MLAgents.Actuators;
+using Unity.MLAgents.Sensors;
 using UnityEngine;
 
 public class CarController : Agent
@@ -66,6 +67,11 @@ public class CarController : Agent
         continuousActions[0] = Input.GetAxis("Horizontal");
         continuousActions[1] = Input.GetAxis("Vertical");
         continuousActions[2] = Input.GetKey(KeyCode.Space) ? 1.0f : 0.0f;
+    }
+
+    public override void CollectObservations(VectorSensor sensor)
+    {
+        sensor.AddObservation(rigidbody.velocity.magnitude);
     }
 
     private void OnTriggerEnter(Collider other)

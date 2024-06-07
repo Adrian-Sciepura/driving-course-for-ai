@@ -441,6 +441,10 @@ PrefabInstance:
       propertyPath: m_LocalPosition.z
       value: 65.65
       objectReference: {fileID: 0}
+    - target: {fileID: 6709570747955441214, guid: ad733d4e03891654c8e6b987f58ec38b, type: 3}
+      propertyPath: m_BrainParameters.VectorObservationSize
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 7006208185766760729, guid: ad733d4e03891654c8e6b987f58ec38b, type: 3}
       propertyPath: m_LocalScale.x
       value: 1.0084
